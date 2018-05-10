@@ -12,7 +12,7 @@ contract ChiefUser {
   DSChief chief;
   VoteProxy proxy;
 
-  function ChiefUser(DSToken gov_, DSToken iou_, DSChief chief_) {
+  function ChiefUser(DSToken gov_, DSToken iou_, DSChief chief_) public {
     iou = iou_;
     gov = gov_;
     chief = chief_;
@@ -22,7 +22,7 @@ contract ChiefUser {
     proxy = proxy_;
   }
 
-  function doTransfer(address to, uint amt) {
+  function doTransfer(address to, uint amt) public {
     gov.transfer(to, amt);
   }
 
@@ -37,10 +37,6 @@ contract ChiefUser {
 
   function doProxyFree(uint amt) public {
     proxy.free(amt);
-  }
-
-  function doProxyApprove(uint amt) public {
-    proxy.approve(amt);
   }
 
   function doLock(uint amt) public {
@@ -72,7 +68,7 @@ contract VoteProxyTest is DSTest {
     uint256 constant initialBalance = 1000 ether;
     uint256 constant electionSize = 3;
 
-     address constant c1 = 0x1;
+    address constant c1 = 0x1;
 
     VoteProxy proxy;
     DSToken gov;
@@ -87,7 +83,7 @@ contract VoteProxyTest is DSTest {
         gov = new DSToken("GOV");
         gov.mint(initialBalance);
 
-        var fab = new DSChiefFab();
+        DSChiefFab fab = new DSChiefFab();
         chief = fab.newChief(gov, electionSize);
         iou = chief.IOU();
 
@@ -135,7 +131,6 @@ contract VoteProxyTest is DSTest {
       require(gov.balanceOf(proxy) == 100 ether);
       require(gov.balanceOf(chief) == 0);
 
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
       require(gov.balanceOf(cold) == 0);
       require(gov.balanceOf(proxy) == 0);
@@ -152,13 +147,38 @@ contract VoteProxyTest is DSTest {
       require(gov.balanceOf(chief) == 0);
     }
 
+    function test_hot_lock_free() public {
+      require(gov.balanceOf(cold) == 100 ether);
+      require(gov.balanceOf(proxy) == 0);
+      require(gov.balanceOf(chief) == 0);
+
+      cold.doTransfer(proxy, 100 ether);
+      require(gov.balanceOf(cold) == 0);
+      require(gov.balanceOf(proxy) == 100 ether);
+      require(gov.balanceOf(chief) == 0);
+
+      hot.doProxyLock(100 ether);
+      require(gov.balanceOf(cold) == 0);
+      require(gov.balanceOf(proxy) == 0);
+      require(gov.balanceOf(chief) == 100 ether);
+
+      hot.doProxyFree(100 ether);
+      require(gov.balanceOf(cold) == 0);
+      require(gov.balanceOf(proxy) == 100 ether);
+      require(gov.balanceOf(chief) == 0);
+
+      hot.doWithdraw(100 ether);
+      require(gov.balanceOf(cold) == 100 ether);
+      require(gov.balanceOf(proxy) == 0);
+      require(gov.balanceOf(chief) == 0);
+    }
+
     function test_hot_proxy_voting_etch() public {
       // setup
       cold.doTransfer(proxy, 100 ether);
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
 
-      var uLargeSlate = new address[](1);
+      address[] memory uLargeSlate = new address[](1);
       uLargeSlate[0] = c1;
       bytes32 slate = hot.doProxyEtch(uLargeSlate);
       hot.doProxyVote(slate);
@@ -168,10 +188,9 @@ contract VoteProxyTest is DSTest {
     function test_cold_proxy_voting_etch() public {
       // setup
       cold.doTransfer(proxy, 100 ether);
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
 
-      var uLargeSlate = new address[](1);
+      address[] memory uLargeSlate = new address[](1);
       uLargeSlate[0] = c1;
       bytes32 slate = cold.doProxyEtch(uLargeSlate);
       cold.doProxyVote(slate);
@@ -181,10 +200,9 @@ contract VoteProxyTest is DSTest {
     function test_hot_proxy_voting_array() public {
       // setup
       cold.doTransfer(proxy, 100 ether);
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
 
-      var uLargeSlate = new address[](1);
+      address[] memory uLargeSlate = new address[](1);
       uLargeSlate[0] = c1;
       hot.doProxyVote(uLargeSlate);
       require(chief.approvals(c1) == 100 ether);
@@ -193,21 +211,12 @@ contract VoteProxyTest is DSTest {
     function test_cold_proxy_voting_array() public {
       // setup
       cold.doTransfer(proxy, 100 ether);
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
 
-      var uLargeSlate = new address[](1);
+      address[] memory uLargeSlate = new address[](1);
       uLargeSlate[0] = c1;
       cold.doProxyVote(uLargeSlate);
       require(chief.approvals(c1) == 100 ether);
-    }
-
-    function testFail_hot_withdrawal() public {
-      cold.doTransfer(proxy, 100 ether);
-      require(gov.balanceOf(cold) == 0);
-      require(gov.balanceOf(proxy) == 100 ether);
-
-      hot.doWithdraw(100 ether);
     }
 
     function testFail_random_withdrawal() public {
@@ -221,10 +230,9 @@ contract VoteProxyTest is DSTest {
     function testFail_random_vote() public {
       // setup
       cold.doTransfer(proxy, 100 ether);
-      cold.doProxyApprove(100 ether);
       cold.doProxyLock(100 ether);
 
-      var uLargeSlate = new address[](1);
+      address[] memory uLargeSlate = new address[](1);
       uLargeSlate[0] = c1;
       random.doProxyVote(uLargeSlate);
       require(chief.approvals(c1) == 100 ether);

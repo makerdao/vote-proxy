@@ -39,6 +39,10 @@ contract ChiefUser {
     proxy.free(amt);
   }
 
+  function doProxyApprove(uint amt) public {
+    proxy.approve(amt);
+  }
+
   function doLock(uint amt) public {
     chief.lock(amt);
   }
@@ -219,6 +223,12 @@ contract VoteProxyTest is DSTest {
       require(chief.approvals(c1) == 100 ether);
     }
 
+    function testFail_no_proxy_approval() public {
+      cold.doTransfer(proxy, 100 ether);
+      cold.doProxyApprove(0);
+      cold.doProxyLock(100 ether);
+    }
+
     function testFail_random_withdrawal() public {
       cold.doTransfer(proxy, 100 ether);
       require(gov.balanceOf(cold) == 0);
@@ -237,6 +247,4 @@ contract VoteProxyTest is DSTest {
       random.doProxyVote(uLargeSlate);
       require(chief.approvals(c1) == 100 ether);
     }
-
-
 }

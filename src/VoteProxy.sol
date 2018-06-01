@@ -25,6 +25,11 @@ contract VoteProxy {
     _;
   }
 
+  function approve(uint amt) public canExecute {
+    gov.approve(chief, amt);
+    iou.approve(chief, amt);
+  }
+
   function lock(uint amt) public canExecute {
     chief.lock(amt);
   }

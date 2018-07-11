@@ -16,27 +16,29 @@ contract VoteProxyFactory {
         iou = chief.IOU();
     }
 
-    function approveLink(address cold_) public returns (VoteProxy voteProxy) {
-        address hot_ = msg.sender;
-        requre(
-            desiredLink[cold_] == hot_, 
-            "Cold wallet must have initiated a link"
-            );
-        require(
-            coldMap[hot_] == address(0) && hotMap[hot_] == address(0), 
-            "Hot wallet cannot already have a Vote Proxy associated with it"
-            );
-        voteProxy = new VoteProxy(gov, chief, iou, cold_, hot_);
-        hotMap[hot_] = voteProxy;
-        coldMap[cold_] = voteProxy;
+    function approveLink(address cold) public returns (VoteProxy voteProxy) {
+        address hot = msg.sender;
+
+        bool mutualInterest = desiredLink[cold] == hot;
+        requre(mutualInterest, "Cold wallet must have initiated a link");
+
+        bool hotHasProxy = coldMap[hot] != address(0) || hotMap[hot] != address(0);
+        require(!hotHasProxy, "Hot wallet cannot already have a Vote Proxy associated with it");
+
+        voteProxy = new VoteProxy(gov, chief, iou, cold, hot);
+        hotMap[hot] = voteProxy;
+        coldMap[cold] = voteProxy;
     }
     
-    function initiateLink(address hot_) public {
-        address cold_ = msg.sender;
-        require(
-            coldMap[cold_] == address(0) && hotMap[cold_] == address(0), 
-            "Cold wallet cannot already have a Vote Proxy associated with it"
-            );
-        desiredLink[cold_] = hot_;
+    function initiateLink(address hot) public {
+        address cold = msg.sender;
+
+        bool coldHasProxy = coldMap[cold] != address(0) || hotMap[cold] != address(0);
+        require(!coldHasProxy, "Cold wallet cannot already have a Vote Proxy associated with it");
+
+        bool hotHasProxy = coldMap[hot] != address(0) || hotMap[hot] != address(0);
+        require(!hotHasProxy, "Hot wallet cannot already have a Vote Proxy associated with it");
+
+        desiredLink[cold] = hot;
     }
 }

@@ -8,7 +8,10 @@ contract VoteProxyFactory {
     DSToken public iou;
     mapping(address=>VoteProxy) public hotMap;
     mapping(address=>VoteProxy) public coldMap;
-    mapping(address=>address) public desiredLink;
+    mapping(address=>address) public linkRequests;
+
+    event LinkRequested(address indexed cold, address indexed hot);
+    event LinkConfirmed(address indexed cold, address indexed hot, address indexed voteProxy);
     
     constructor(DSChief chief_) public {
         chief = chief_;
@@ -16,29 +19,31 @@ contract VoteProxyFactory {
         iou = chief.IOU();
     }
 
+    function hasProxy(address guy) public view returns (bool) {
+        return coldMap[guy] != address(0) || hotMap[guy] != address(0);
+    }
+
+    function initiateLink(address hot) public {
+        address cold = msg.sender;
+
+        require(!hasProxy(cold), "Cold wallet cannot already be linked to a Vote Proxy");
+        require(!hasProxy(hot), "Hot wallet cannot already be linked to a Vote Proxy");
+
+        linkRequests[cold] = hot;
+        emit LinkRequested(cold, hot);
+    }
+
     function approveLink(address cold) public returns (VoteProxy voteProxy) {
         address hot = msg.sender;
 
-        bool mutualInterest = desiredLink[cold] == hot;
-        requre(mutualInterest, "Cold wallet must have initiated a link");
-
-        bool hotHasProxy = coldMap[hot] != address(0) || hotMap[hot] != address(0);
-        require(!hotHasProxy, "Hot wallet cannot already have a Vote Proxy associated with it");
+        bool mutualInterest = linkRequests[cold] == hot;
+        requre(mutualInterest, "Cold wallet must initiate a link first");
+        require(!hasProxy(hot), "Hot wallet cannot already be linked to a Vote Proxy");
 
         voteProxy = new VoteProxy(gov, chief, iou, cold, hot);
         hotMap[hot] = voteProxy;
         coldMap[cold] = voteProxy;
-    }
-    
-    function initiateLink(address hot) public {
-        address cold = msg.sender;
-
-        bool coldHasProxy = coldMap[cold] != address(0) || hotMap[cold] != address(0);
-        require(!coldHasProxy, "Cold wallet cannot already have a Vote Proxy associated with it");
-
-        bool hotHasProxy = coldMap[hot] != address(0) || hotMap[hot] != address(0);
-        require(!hotHasProxy, "Hot wallet cannot already have a Vote Proxy associated with it");
-
-        desiredLink[cold] = hot;
+        delete linkRequests[cold];
+        emit LinkConfirmed(cold, hot, voteProxy);
     }
 }

@@ -28,6 +28,7 @@ contract VoteProxyFactory {
 
         require(!hasProxy(cold), "Cold wallet cannot already be linked to a Vote Proxy");
         require(!hasProxy(hot), "Hot wallet cannot already be linked to a Vote Proxy");
+        require(cold != hot, "Hot wallet cannot be the same as the cold wallet"); // should we allow this?
 
         linkRequests[cold] = hot;
         emit LinkRequested(cold, hot);
@@ -37,7 +38,7 @@ contract VoteProxyFactory {
         address hot = msg.sender;
 
         bool mutualInterest = linkRequests[cold] == hot;
-        requre(mutualInterest, "Cold wallet must initiate a link first");
+        require(mutualInterest, "Cold wallet must initiate a link first");
         require(!hasProxy(hot), "Hot wallet cannot already be linked to a Vote Proxy");
 
         voteProxy = new VoteProxy(gov, chief, iou, cold, hot);

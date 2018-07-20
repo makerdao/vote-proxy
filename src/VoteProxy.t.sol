@@ -7,65 +7,65 @@ import "ds-chief/chief.sol";
 import "./VoteProxy.sol";
 
 contract ChiefUser {
-  DSToken gov;
-  DSToken iou;
-  DSChief chief;
-  VoteProxy proxy;
+    DSToken gov;
+    DSToken iou;
+    DSChief chief;
+    VoteProxy proxy;
 
-  function ChiefUser(DSToken gov_, DSToken iou_, DSChief chief_) public {
-    iou = iou_;
-    gov = gov_;
-    chief = chief_;
-  }
+    function ChiefUser(DSToken gov_, DSToken iou_, DSChief chief_) public {
+        iou = iou_;
+        gov = gov_;
+        chief = chief_;
+    }
 
-  function setProxy(VoteProxy proxy_) public {
-    proxy = proxy_;
-  }
+    function setProxy(VoteProxy proxy_) public {
+        proxy = proxy_;
+    }
 
-  function doTransfer(address to, uint amt) public {
-    gov.transfer(to, amt);
-  }
+    function doTransfer(address to, uint amt) public {
+        gov.transfer(to, amt);
+    }
 
-  function doApprove(uint amt) public {
-    gov.approve(chief, amt);
-    iou.approve(chief, amt);
-  }
+    function doApprove(uint amt) public {
+        gov.approve(chief, amt);
+        iou.approve(chief, amt);
+    }
 
-  function doProxyLock(uint amt) public {
-    proxy.lock(amt);
-  }
+    function doProxyLock(uint amt) public {
+        proxy.lock(amt);
+    }
 
-  function doProxyFree(uint amt) public {
-    proxy.free(amt);
-  }
+    function doProxyFree(uint amt) public {
+        proxy.free(amt);
+    }
 
-  function doProxyApprove(uint amt) public {
-    proxy.approve(amt);
-  }
+    function doProxyApprove(uint amt) public {
+        proxy.approve(amt);
+    }
 
-  function doLock(uint amt) public {
-    chief.lock(amt);
-  }
+    function doLock(uint amt) public {
+        chief.lock(amt);
+    }
 
-  function doFree(uint amt) public {
-    chief.free(amt);
-  }
+    function doFree(uint amt) public {
+        chief.free(amt);
+    }
 
-  function doWithdraw(uint amt) public {
-      proxy.withdraw(amt);
-  }
+    function doWithdraw(uint amt) public {
+        proxy.withdraw(amt);
+    }
 
-  function doProxyVote(address[] yays) public returns (bytes32 slate) {
-    return proxy.vote(yays);
-  }
+    function doProxyVote(address[] yays) public returns (bytes32 slate) {
+        return proxy.vote(yays);
+    }
 
-  function doProxyEtch(address[] yays) public returns (bytes32 slate) {
-    return proxy.etch(yays);
-  }
+    function doProxyEtch(address[] yays) public returns (bytes32 slate) {
+        return proxy.etch(yays);
+    }
 
-  function doProxyVote(bytes32 slate) public {
-    return proxy.vote(slate);
-  }
+    function doProxyVote(bytes32 slate) public {
+        return proxy.vote(slate);
+    }
 }
 
 contract VoteProxyTest is DSTest {
@@ -97,7 +97,7 @@ contract VoteProxyTest is DSTest {
 
         gov.transfer(cold, 100 ether);
 
-        proxy = new VoteProxy(gov, chief, iou, cold, hot);
+        proxy = new VoteProxy(chief, cold, hot);
 
         cold.setProxy(proxy);
         hot.setProxy(proxy);

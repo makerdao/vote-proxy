@@ -4,20 +4,16 @@ import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 
 contract VoteProxy {
-  address cold;
-  address hot;
-  DSToken gov;
-  DSToken iou;
-  DSChief chief;
+  address public cold;
+  address public hot;
+  DSChief public chief;
 
-  function VoteProxy(DSToken gov_, DSChief chief_, DSToken iou_, address cold_, address hot_) public {
+  function VoteProxy(DSChief chief_, address cold_, address hot_) public {
     cold = cold_;
     hot = hot_;
-    gov = gov_;
     chief = chief_;
-    iou = iou_;
-    gov.approve(chief, uint(-1));
-    iou.approve(chief, uint(-1));
+    chief.GOV().approve(chief, uint(-1));
+    chief.IOU().approve(chief, uint(-1));
   }
 
   modifier canExecute() {
@@ -26,8 +22,8 @@ contract VoteProxy {
   }
 
   function approve(uint amt) public canExecute {
-    gov.approve(chief, amt);
-    iou.approve(chief, amt);
+    chief.GOV().approve(chief, amt);
+    chief.IOU().approve(chief, amt);
   }
 
   function lock(uint amt) public canExecute {
@@ -39,7 +35,7 @@ contract VoteProxy {
   }
 
   function withdraw(uint amt) public canExecute {
-    gov.transfer(cold, amt);
+    chief.GOV().transfer(cold, amt);
   }
 
   // actions which can be called from the hot wallet

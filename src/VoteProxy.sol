@@ -38,12 +38,30 @@ contract VoteProxy {
     chief.GOV().transfer(cold, amt);
   }
 
-  // actions which can be called from the hot wallet
+  function unlockWithdrawAll() public canExecute {
+    uint locked = chief.deposits(this);
+    chief.free(locked);
+    uint amt = chief.GOV().balanceOf(this);
+    withdraw(amt);
+  }
+
   function vote(address[] yays) public canExecute returns (bytes32 slate) {
     return chief.vote(yays);
   }
 
   function vote(bytes32 slate) public canExecute {
+    chief.vote(slate);
+  }
+
+  function lockAllVote(address[] yays) public canExecute returns (bytes32 slate) {
+    uint amt = chief.GOV().balanceOf(this);
+    chief.lock(amt);
+    return chief.vote(yays);
+  }
+
+  function lockAllVote(bytes32 slate) public canExecute {
+    uint amt = chief.GOV().balanceOf(this);
+    chief.lock(amt);
     chief.vote(slate);
   }
 

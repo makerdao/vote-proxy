@@ -3,7 +3,7 @@ pragma solidity ^0.4.21;
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 
-contract VoteProxy {
+contract VoteProxy is DSMath {
   address public cold;
   address public hot;
   DSChief public chief;
@@ -43,6 +43,20 @@ contract VoteProxy {
     chief.free(locked);
     uint amt = chief.GOV().balanceOf(this);
     withdraw(amt);
+  }
+
+  function unlockWithdraw(uint amt) public canExecute {
+    uint locked = chief.deposits(this);
+    uint here = chief.GOV().balanceOf(this);
+    uint available = add(locked, here);
+    require(amt <= available, "amount requested for withdrawal is more than what is available");
+    if (here >= amt) {
+      withdraw(amt);
+    } else {
+      uint diff = sub(amt, here);
+      chief.free(diff);
+      withdraw(amt);
+    } 
   }
 
   function vote(address[] yays) public canExecute returns (bytes32 slate) {

@@ -55,6 +55,14 @@ contract ChiefUser {
         proxy.withdraw(amt);
     }
 
+    function doProxyUnlockWithdrawAll() public {
+        proxy.unlockWithdrawAll();
+    }
+
+    function doProxyUnlockWithdraw(uint amt) public {
+        proxy.unlockWithdraw(amt);
+    }
+
     function doProxyVote(address[] yays) public returns (bytes32 slate) {
         return proxy.vote(yays);
     }
@@ -221,6 +229,27 @@ contract VoteProxyTest is DSTest {
       uLargeSlate[0] = c1;
       cold.doProxyVote(uLargeSlate);
       require(chief.approvals(c1) == 100 ether);
+    }
+
+    function test_unlock_withdraw_all() public {
+      // setup
+      cold.doTransfer(proxy, 100 ether);
+      cold.doProxyLock(50 ether);
+
+      cold.doProxyUnlockWithdrawAll();
+      require(gov.balanceOf(cold) == 100 ether);
+      require(gov.balanceOf(proxy) == 0);
+    }
+
+    function test_unlock_withdraw() public {
+      // setup
+      cold.doTransfer(proxy, 100 ether);
+      cold.doProxyLock(50 ether);
+
+      cold.doProxyUnlockWithdraw(75 ether);
+      require(gov.balanceOf(cold) == 75 ether);
+      require(gov.balanceOf(proxy) == 0 ether);
+      require(chief.deposits(proxy) == 25 ether);
     }
 
     function testFail_no_proxy_approval() public {

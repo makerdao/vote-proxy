@@ -39,20 +39,15 @@ contract VoteProxy is DSMath {
   }
 
   function unlockWithdrawAll() public canExecute {
-    uint locked = chief.deposits(this);
-    chief.free(locked);
-    uint amt = chief.GOV().balanceOf(this);
-    withdraw(amt);
+    chief.free(chief.deposits(this));
+    withdraw(chief.GOV().balanceOf(this));
   }
 
   function unlockWithdraw(uint amt) public canExecute {
-    uint locked = chief.deposits(this);
     uint here = chief.GOV().balanceOf(this);
-    uint available = add(locked, here);
-    require(amt <= available, "amount requested for withdrawal is more than what is available");
+    require(amt <= add(chief.deposits(this), here), "amount requested for withdrawal is more than what is available");
     if (here < amt) {
-      uint diff = sub(amt, here);
-      chief.free(diff);
+      chief.free(sub(amt, here));
     }
     withdraw(amt);
   }
@@ -66,14 +61,12 @@ contract VoteProxy is DSMath {
   }
 
   function lockAllVote(address[] yays) public canExecute returns (bytes32 slate) {
-    uint amt = chief.GOV().balanceOf(this);
-    chief.lock(amt);
+    chief.lock(chief.GOV().balanceOf(this));
     return chief.vote(yays);
   }
 
   function lockAllVote(bytes32 slate) public canExecute {
-    uint amt = chief.GOV().balanceOf(this);
-    chief.lock(amt);
+    chief.lock(chief.GOV().balanceOf(this));
     chief.vote(slate);
   }
 

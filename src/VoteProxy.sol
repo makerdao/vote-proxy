@@ -50,13 +50,11 @@ contract VoteProxy is DSMath {
     uint here = chief.GOV().balanceOf(this);
     uint available = add(locked, here);
     require(amt <= available, "amount requested for withdrawal is more than what is available");
-    if (here >= amt) {
-      withdraw(amt);
-    } else {
+    if (here < amt) {
       uint diff = sub(amt, here);
       chief.free(diff);
-      withdraw(amt);
-    } 
+    }
+    withdraw(amt);
   }
 
   function vote(address[] yays) public canExecute returns (bytes32 slate) {

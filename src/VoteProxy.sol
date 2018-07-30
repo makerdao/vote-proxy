@@ -34,6 +34,10 @@ contract VoteProxy is DSMath {
     chief.free(amt);
   }
 
+  function freeAll() public canExecute {
+    chief.free(chief.deposits(this));
+  }
+
   function withdraw(uint amt) public canExecute {
     chief.GOV().transfer(cold, amt);
   }

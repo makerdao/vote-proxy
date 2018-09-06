@@ -1,9 +1,13 @@
-pragma solidity ^0.4.21;
+// VoteProxyFactory - create and keep record of proxy identities
+
+pragma solidity ^0.4.24;
 
 import "./VoteProxy.sol";
 
+
 contract VoteProxyFactory {
     DSChief public chief;
+    Polling public polling;
     mapping(address => VoteProxy) public hotMap;
     mapping(address => VoteProxy) public coldMap;
     mapping(address => address) public linkRequests;
@@ -11,18 +15,18 @@ contract VoteProxyFactory {
     event LinkRequested(address indexed cold, address indexed hot);
     event LinkConfirmed(address indexed cold, address indexed hot, address indexed voteProxy);
     
-    constructor(DSChief chief_) public {
+    constructor(DSChief chief_, Polling polling_) public {
         chief = chief_;
+        polling = polling_;
     }
 
     function hasProxy(address guy) public view returns (bool) {
-        return coldMap[guy] != address(0) || hotMap[guy] != address(0);
+        return (coldMap[guy] != address(0) || hotMap[guy] != address(0));
     }
 
     function initiateLink(address hot) public {
         require(!hasProxy(msg.sender), "Cold wallet is already linked to another Vote Proxy");
         require(!hasProxy(hot), "Hot wallet is already linked to another Vote Proxy");
-        require(msg.sender != hot, "Hot wallet cannot be the same as the cold wallet"); // should we allow this?
 
         linkRequests[msg.sender] = hot;
         emit LinkRequested(msg.sender, hot);
@@ -32,7 +36,7 @@ contract VoteProxyFactory {
         require(linkRequests[cold] == msg.sender, "Cold wallet must initiate a link first");
         require(!hasProxy(msg.sender), "Hot wallet is already linked to another Vote Proxy");
 
-        voteProxy = new VoteProxy(chief, cold, msg.sender);
+        voteProxy = new VoteProxy(chief, polling, cold, msg.sender);
         hotMap[msg.sender] = voteProxy;
         coldMap[cold] = voteProxy;
         delete linkRequests[cold];
@@ -40,7 +44,7 @@ contract VoteProxyFactory {
     }
 
     function breakLink() public {
-        require(coldMap[msg.sender] != address(0) || hotMap[msg.sender] != address(0), "No VoteProxy found for this sender");
+        require(hasProxy(msg.sender), "No VoteProxy found for this sender");
 
         VoteProxy voteProxy;
         address cold;
@@ -55,9 +59,18 @@ contract VoteProxyFactory {
             hot = msg.sender;
         }
 
-        require(chief.GOV().balanceOf(voteProxy) == 0 && chief.IOU().balanceOf(voteProxy) == 0, "VoteProxy has still funds attached to it");
+        require(
+            chief.GOV().balanceOf(voteProxy) == 0 && chief.IOU().balanceOf(voteProxy) == 0, 
+            "VoteProxy has still funds attached to it"
+        );
 
         delete coldMap[cold];
         delete hotMap[hot];
+    }
+
+    function linkSelf() public returns (VoteProxy voteProxy) {
+        require(!hasProxy(msg.sender));
+        initiateLink(msg.sender);
+        return approveLink(msg.sender);
     }
 }

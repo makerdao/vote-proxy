@@ -1,83 +1,69 @@
-pragma solidity ^0.4.21;
+// VoteProxy - vote w/ a proxy identity
+
+pragma solidity ^0.4.24;
 
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
+import "./_polling.sol";
 
-contract VoteProxy is DSMath {
-  address public cold;
-  address public hot;
-  DSChief public chief;
 
-  function VoteProxy(DSChief chief_, address cold_, address hot_) public {
-    cold = cold_;
-    hot = hot_;
-    chief = chief_;
-    chief.GOV().approve(chief, uint(-1));
-    chief.IOU().approve(chief, uint(-1));
-  }
+contract VoteProxy {
+    address public cold;
+    address public hot;
+    DSToken public gov;
+    DSToken public iou;
+    DSChief public chief;
+    Polling public polling;
 
-  modifier canExecute() {
-    require(msg.sender == hot || msg.sender == cold);
-    _;
-  }
-
-  function approve(uint amt) public canExecute {
-    chief.GOV().approve(chief, amt);
-    chief.IOU().approve(chief, amt);
-  }
-
-  function lock(uint amt) public canExecute {
-    chief.lock(amt);
-  }
-
-  function free(uint amt) public canExecute {
-    chief.free(amt);
-  }
-
-  function freeAll() public canExecute {
-    chief.free(chief.deposits(this));
-  }
-
-  function withdraw(uint amt) public canExecute {
-    chief.GOV().transfer(cold, amt);
-  }
-
-  function unlockWithdrawAll() public canExecute {
-    chief.free(chief.deposits(this));
-    withdraw(chief.GOV().balanceOf(this));
-  }
-
-  function unlockWithdraw(uint amt) public canExecute {
-    uint here = chief.GOV().balanceOf(this);
-    require(amt <= add(chief.deposits(this), here), "amount requested for withdrawal is more than what is available");
-    if (here < amt) {
-      chief.free(sub(amt, here));
+    constructor(DSChief _chief, Polling _polling, address _cold, address _hot) 
+      public 
+    {
+        hot = _hot;
+        cold = _cold;
+        chief = _chief;
+        polling = _polling;
+        
+        gov = chief.GOV();
+        iou = chief.IOU();
+        gov.approve(chief, uint256(-1));
+        iou.approve(chief, uint256(-1));
+        iou.approve(polling, uint256(-1));
     }
-    withdraw(amt);
-  }
 
-  function vote(address[] yays) public canExecute returns (bytes32 slate) {
-    return chief.vote(yays);
-  }
+    modifier auth() {
+        require(msg.sender == hot || msg.sender == cold);
+        _;
+    }
+    
+    function lock(uint256 wad, bool _poll) public auth {
+        gov.pull(cold, wad);          // mkr from cold 
+        chief.lock(wad);              // mkr out, ious in
+        if (_poll) polling.lock(wad); // ious out
+    }
 
-  function vote(bytes32 slate) public canExecute {
-    chief.vote(slate);
-  }
+    function free(uint256 wad, bool _poll) public auth {
+        if (_poll) polling.free(wad); // ious in
+        chief.free(wad);              // ious out, mkr in
+        gov.push(cold, wad);          // mkr to cold
+    }
 
-  function lockAllVote(address[] yays) public canExecute returns (bytes32 slate) {
-    chief.lock(chief.GOV().balanceOf(this));
-    return chief.vote(yays);
-  }
+    function join() public auth {
+        polling.lock(iou.balanceOf(this));      
+    }
 
-  function lockAllVote(bytes32 slate) public canExecute {
-    chief.lock(chief.GOV().balanceOf(this));
-    chief.vote(slate);
-  }
+    function voteExec(address[] yays) public auth returns (bytes32) {
+        return chief.vote(yays);
+    }
 
-  function etch(address[] yays) public canExecute returns (bytes32 slate) {
-    return chief.etch(yays);
-  }
+    function voteExec(bytes32 slate) public auth {
+        chief.vote(slate);
+    }
 
-  // lock proxy cold
-  // free proxy cold
+    function voteGov(uint256 id, bool yay, bytes _logData) public auth {
+        polling.vote(id, yay, _logData);
+    }
+
+    function retractGov(uint256 id) public auth {
+        polling.unSay(id);
+    }
 }

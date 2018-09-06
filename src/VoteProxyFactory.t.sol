@@ -1,13 +1,14 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import "ds-test/test.sol";
 import "./VoteProxyFactory.sol";
+
 
 contract VoteUser {
     DSChief chief;
     VoteProxyFactory voteProxyFactory;
 
-    function VoteUser(VoteProxyFactory voteProxyFactory_) public {
+    constructor(VoteProxyFactory voteProxyFactory_) public {
         voteProxyFactory = voteProxyFactory_;
     }
 
@@ -19,6 +20,10 @@ contract VoteUser {
         return voteProxyFactory.approveLink(cold);
     }
 
+    function doLinkSelf() public returns (VoteProxy) {
+        return voteProxyFactory.linkSelf();
+    }
+
     function doBreakLink() public {
         voteProxyFactory.breakLink();
     }
@@ -28,6 +33,7 @@ contract VoteUser {
     }
 }
 
+
 contract VoteProxyFactoryTest is DSTest {
     uint256 constant electionSize = 3;
 
@@ -35,6 +41,7 @@ contract VoteProxyFactoryTest is DSTest {
     DSToken gov;
     DSToken iou;
     DSChief chief;
+    Polling polling;
 
     VoteUser cold;
     VoteUser hot;
@@ -44,8 +51,8 @@ contract VoteProxyFactoryTest is DSTest {
 
         DSChiefFab fab = new DSChiefFab();
         chief = fab.newChief(gov, electionSize);
-        voteProxyFactory = new VoteProxyFactory(chief);
-
+        polling = new Polling(chief.IOU());
+        voteProxyFactory = new VoteProxyFactory(chief, polling);
         cold = new VoteUser(voteProxyFactory);
         hot  = new VoteUser(voteProxyFactory);
     }
@@ -92,5 +99,13 @@ contract VoteProxyFactoryTest is DSTest {
         chief.GOV().mint(cold, 1);
         cold.doTransfer(chief.GOV(), voteProxy, 1);
         cold.doBreakLink();
+    }
+
+    function test_linkSelf() public { // misnomer, transfer uneccessary
+        assertEq(voteProxyFactory.coldMap(cold), address(0));
+        VoteProxy voteProxy = cold.doLinkSelf();
+        assertEq(voteProxyFactory.coldMap(cold), voteProxy);
+        assertEq(voteProxyFactory.coldMap(cold).cold(), cold);
+        assertEq(voteProxyFactory.hotMap(cold).hot(), cold);
     }
 }

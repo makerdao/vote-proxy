@@ -47,6 +47,12 @@ contract VoteProxy {
         gov.push(cold, wad);          // mkr to cold
     }
 
+    function freeAll(bool _poll) public auth {
+        if (_poll) polling.free(polling.getDeposits(this));
+        chief.free(iou.balanceOf(this));             
+        gov.push(cold, gov.balanceOf(this));         
+    }
+
     function join() public auth {
         polling.lock(iou.balanceOf(this));      
     }

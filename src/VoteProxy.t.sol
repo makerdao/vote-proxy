@@ -50,6 +50,10 @@ contract Voter {
         proxy.free(amt, _poll);
     }
 
+    function doProxyFreeAll(bool _poll) public {
+        proxy.freeAll(_poll);
+    }
+
     function doProxyVoteExec(address[] yays) public returns (bytes32 slate) {
         return proxy.voteExec(yays);
     }
@@ -195,6 +199,31 @@ contract VoteProxyTest is DSTest {
         assertEq(gov.balanceOf(chief), 100 ether);
 
         hot.doProxyFree(100 ether, false);
+        assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(iou.balanceOf(polling), 0 ether);
+        assertEq(gov.balanceOf(chief), 0 ether);
+    }
+
+    function test_lock_freeAll() public {
+        cold.approveGov(proxy);
+        assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(iou.balanceOf(polling), 0 ether);
+        assertEq(gov.balanceOf(chief), 0 ether);
+
+        cold.doProxyLock(10000001000001001, true);
+        assertEq(iou.balanceOf(polling), 10000001000001001);
+        assertEq(gov.balanceOf(chief), 10000001000001001);
+
+        hot.doProxyFreeAll(true);
+        assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(iou.balanceOf(polling), 0 ether);
+        assertEq(gov.balanceOf(chief), 0 ether);
+
+        cold.doProxyLock(10000001000001001, false);
+        assertEq(iou.balanceOf(polling), 0 ether);
+        assertEq(gov.balanceOf(chief), 10000001000001001);
+
+        hot.doProxyFreeAll(false);
         assertEq(gov.balanceOf(cold), 100 ether);
         assertEq(iou.balanceOf(polling), 0 ether);
         assertEq(gov.balanceOf(chief), 0 ether);

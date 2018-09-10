@@ -69,7 +69,6 @@ contract VoteProxyFactory {
     }
 
     function linkSelf() public returns (VoteProxy voteProxy) {
-        require(!hasProxy(msg.sender));
         initiateLink(msg.sender);
         return approveLink(msg.sender);
     }

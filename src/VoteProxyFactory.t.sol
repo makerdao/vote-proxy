@@ -108,4 +108,12 @@ contract VoteProxyFactoryTest is DSTest {
         assertEq(voteProxyFactory.coldMap(cold).cold(), cold);
         assertEq(voteProxyFactory.hotMap(cold).hot(), cold);
     }
+
+    function testFail_linkSelf() public { // misnomer, transfer uneccessary
+        assertEq(voteProxyFactory.coldMap(cold), address(0));
+        cold.doInitiateLink(hot);
+        hot.doApproveLink(cold);
+        assertEq(voteProxyFactory.coldMap(cold), hot);
+        cold.doLinkSelf();
+    }
 }

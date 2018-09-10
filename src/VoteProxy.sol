@@ -6,7 +6,6 @@ import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 import "./_polling.sol";
 
-
 contract VoteProxy {
     address public cold;
     address public hot;
@@ -15,13 +14,11 @@ contract VoteProxy {
     DSChief public chief;
     Polling public polling;
 
-    constructor(DSChief _chief, Polling _polling, address _cold, address _hot) 
-      public 
-    {
-        hot = _hot;
-        cold = _cold;
+    constructor(DSChief _chief, Polling _polling, address _cold, address _hot) public {
         chief = _chief;
         polling = _polling;
+        cold = _cold;
+        hot = _hot;
         
         gov = chief.GOV();
         iou = chief.IOU();
@@ -31,7 +28,7 @@ contract VoteProxy {
     }
 
     modifier auth() {
-        require(msg.sender == hot || msg.sender == cold);
+        require(msg.sender == hot || msg.sender == cold, "Sender has to be Cold or Hot Wallet");
         _;
     }
     

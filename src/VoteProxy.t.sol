@@ -9,17 +9,17 @@ import "./VoteProxy.sol";
 
 
 contract Voter {
-    DSToken gov;
-    DSToken iou;
     DSChief chief;
     Polling polling;
+    DSToken gov;
+    DSToken iou;
     VoteProxy public proxy;
 
     constructor(DSChief chief_, Polling polling_, DSToken gov_, DSToken iou_) public {
-        iou = iou_;
-        gov = gov_;
         chief = chief_;
         polling = polling_;
+        gov = gov_;
+        iou = iou_;
     }
 
     function setProxy(VoteProxy proxy_) public {
@@ -75,7 +75,6 @@ contract WarpPolling is Polling {
     function age() public view returns (uint32) { return _age; }       
     constructor(DSToken _gov) public Polling(_gov) {}
 }
-
 
 contract VoteProxyTest is DSTest {
     uint256 constant electionSize = 3;

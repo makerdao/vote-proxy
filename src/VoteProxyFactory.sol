@@ -1,13 +1,10 @@
 // VoteProxyFactory - create and keep record of proxy identities
-
 pragma solidity ^0.4.24;
 
 import "./VoteProxy.sol";
 
-
 contract VoteProxyFactory {
     DSChief public chief;
-    Polling public polling;
     mapping(address => VoteProxy) public hotMap;
     mapping(address => VoteProxy) public coldMap;
     mapping(address => address) public linkRequests;
@@ -15,10 +12,7 @@ contract VoteProxyFactory {
     event LinkRequested(address indexed cold, address indexed hot);
     event LinkConfirmed(address indexed cold, address indexed hot, address indexed voteProxy);
     
-    constructor(DSChief chief_, Polling polling_) public {
-        chief = chief_;
-        polling = polling_;
-    }
+    constructor(DSChief chief_) public { chief = chief_; }
 
     function hasProxy(address guy) public view returns (bool) {
         return (coldMap[guy] != address(0) || hotMap[guy] != address(0));
@@ -36,7 +30,7 @@ contract VoteProxyFactory {
         require(linkRequests[cold] == msg.sender, "Cold wallet must initiate a link first");
         require(!hasProxy(msg.sender), "Hot wallet is already linked to another Vote Proxy");
 
-        voteProxy = new VoteProxy(chief, polling, cold, msg.sender);
+        voteProxy = new VoteProxy(chief, cold, msg.sender);
         hotMap[msg.sender] = voteProxy;
         coldMap[cold] = voteProxy;
         delete linkRequests[cold];
@@ -46,23 +40,11 @@ contract VoteProxyFactory {
     function breakLink() public {
         require(hasProxy(msg.sender), "No VoteProxy found for this sender");
 
-        VoteProxy voteProxy;
-        address cold;
-        address hot;
-        if (coldMap[msg.sender] != address(0)) {
-            voteProxy = coldMap[msg.sender];
-            cold = msg.sender;
-            hot = coldMap[msg.sender].hot();
-        } else {
-            voteProxy = hotMap[msg.sender];
-            cold = hotMap[msg.sender].cold();
-            hot = msg.sender;
-        }
-
-        require(
-            chief.GOV().balanceOf(voteProxy) == 0 && chief.IOU().balanceOf(voteProxy) == 0, 
-            "VoteProxy has still funds attached to it"
-        );
+        VoteProxy voteProxy = coldMap[msg.sender] != address(0)
+            ? coldMap[msg.sender] : hotMap[msg.sender];
+        address cold = voteProxy.cold();
+        address hot = voteProxy.hot();
+        require(chief.IOU().balanceOf(voteProxy) == 0, "VoteProxy still has funds attached to it");
 
         delete coldMap[cold];
         delete hotMap[hot];

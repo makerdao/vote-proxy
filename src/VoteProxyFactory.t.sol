@@ -3,7 +3,6 @@ pragma solidity ^0.4.24;
 import "ds-test/test.sol";
 import "./VoteProxyFactory.sol";
 
-
 contract VoteUser {
     DSChief chief;
     VoteProxyFactory voteProxyFactory;
@@ -28,8 +27,21 @@ contract VoteUser {
         voteProxyFactory.breakLink();
     }
 
-    function doTransfer(DSToken token, address to, uint amount) public {
-        token.transfer(to, amount);
+    function tryBreakLink() public returns (bool) {
+        bytes4 sig = bytes4(keccak256("breakLink()"));
+        return address(voteProxyFactory).call(sig);
+    }
+
+    function proxyApprove(address _proxy, DSToken _token) public {
+        _token.approve(_proxy);
+    }
+
+    function proxyLock(VoteProxy _proxy, uint amount) public {
+        _proxy.lock(amount);
+    }
+
+    function proxyFree(VoteProxy _proxy, uint amount) public {
+        _proxy.free(amount);
     }
 }
 
@@ -41,7 +53,6 @@ contract VoteProxyFactoryTest is DSTest {
     DSToken gov;
     DSToken iou;
     DSChief chief;
-    Polling polling;
 
     VoteUser cold;
     VoteUser hot;
@@ -51,8 +62,7 @@ contract VoteProxyFactoryTest is DSTest {
 
         DSChiefFab fab = new DSChiefFab();
         chief = fab.newChief(gov, electionSize);
-        polling = new Polling(chief.IOU());
-        voteProxyFactory = new VoteProxyFactory(chief, polling);
+        voteProxyFactory = new VoteProxyFactory(chief);
         cold = new VoteUser(voteProxyFactory);
         hot  = new VoteUser(voteProxyFactory);
     }
@@ -93,12 +103,16 @@ contract VoteProxyFactoryTest is DSTest {
         assertEq(voteProxyFactory.hotMap(hot), address(0));
     }
 
-    function testFail_BreakLink() public {
+    function test_tryBreakLink() public {
         cold.doInitiateLink(hot);
         VoteProxy voteProxy = hot.doApproveLink(cold);
         chief.GOV().mint(cold, 1);
-        cold.doTransfer(chief.GOV(), voteProxy, 1);
-        cold.doBreakLink();
+        cold.proxyApprove(voteProxy, chief.GOV());
+        cold.proxyLock(voteProxy, 1);
+        assertTrue(!cold.tryBreakLink());
+
+        cold.proxyFree(voteProxy, 1);
+        assertTrue(cold.tryBreakLink());
     }
 
     function test_linkSelf() public { // misnomer, transfer uneccessary

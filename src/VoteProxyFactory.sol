@@ -44,7 +44,7 @@ contract VoteProxyFactory {
             ? coldMap[msg.sender] : hotMap[msg.sender];
         address cold = voteProxy.cold();
         address hot = voteProxy.hot();
-        require(chief.IOU().balanceOf(voteProxy) == 0, "VoteProxy still has funds attached to it");
+        require(chief.deposits(voteProxy) == 0, "VoteProxy still has funds attached to it");
 
         delete coldMap[cold];
         delete hotMap[hot];

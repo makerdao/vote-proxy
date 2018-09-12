@@ -30,6 +30,10 @@ contract Voter {
         chief.free(amt);
     }
 
+    function doTransfer(address guy, uint amt) public {
+        gov.transfer(guy, amt);
+    }
+
     function approveGov(address guy) public {
         gov.approve(guy);
     }
@@ -44,6 +48,10 @@ contract Voter {
 
     function doProxyFree(uint amt) public {
         proxy.free(amt);
+    }
+
+    function doProxyFreeAll() public {
+        proxy.freeAll();
     }
 
     function doProxyVote(address[] yays) public returns (bytes32 slate) {
@@ -159,6 +167,23 @@ contract VoteProxyTest is DSTest {
 
         hot.doProxyFree(100 ether);
         assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(gov.balanceOf(chief), 0 ether);
+    }
+
+    function test_free_all() public {
+        cold.approveGov(proxy);
+        assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(gov.balanceOf(chief), 0 ether);
+
+        cold.doProxyLock(50 ether);
+        cold.doTransfer(proxy, 25 ether);
+        assertEq(gov.balanceOf(cold), 25 ether);
+        assertEq(gov.balanceOf(proxy), 25 ether);
+        assertEq(gov.balanceOf(chief), 50 ether);
+
+        cold.doProxyFreeAll();
+        assertEq(gov.balanceOf(cold), 100 ether);
+        assertEq(gov.balanceOf(proxy), 0 ether);
         assertEq(gov.balanceOf(chief), 0 ether);
     }
 

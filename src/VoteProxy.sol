@@ -37,6 +37,11 @@ contract VoteProxy {
         gov.push(cold, wad);   // mkr to cold
     }
 
+    function freeAll() public auth {
+        chief.free(chief.deposits(this));            
+        gov.push(cold, gov.balanceOf(this)); 
+    }
+
     function vote(address[] yays) public auth returns (bytes32) {
         return chief.vote(yays);
     }

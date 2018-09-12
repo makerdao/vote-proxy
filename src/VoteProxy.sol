@@ -1,60 +1,52 @@
-pragma solidity ^0.4.21;
+// VoteProxy - vote w/ a hot or cold wallet using a proxy identity
+pragma solidity ^0.4.24;
 
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 
 contract VoteProxy {
-  address cold;
-  address hot;
-  DSToken gov;
-  DSToken iou;
-  DSChief chief;
+    address public cold;
+    address public hot;
+    DSToken public gov;
+    DSToken public iou;
+    DSChief public chief;
 
-  function VoteProxy(DSToken gov_, DSChief chief_, DSToken iou_, address cold_, address hot_) public {
-    cold = cold_;
-    hot = hot_;
-    gov = gov_;
-    chief = chief_;
-    iou = iou_;
-    gov.approve(chief, uint(-1));
-    iou.approve(chief, uint(-1));
-  }
+    constructor(DSChief _chief, address _cold, address _hot) public {
+        chief = _chief;
+        cold = _cold;
+        hot = _hot;
+        
+        gov = chief.GOV();
+        iou = chief.IOU();
+        gov.approve(chief, uint256(-1));
+        iou.approve(chief, uint256(-1));
+    }
 
-  modifier canExecute() {
-    require(msg.sender == hot || msg.sender == cold);
-    _;
-  }
+    modifier auth() {
+        require(msg.sender == hot || msg.sender == cold, "Sender must be a Cold or Hot Wallet");
+        _;
+    }
+    
+    function lock(uint256 wad) public auth {
+        gov.pull(cold, wad);   // mkr from cold
+        chief.lock(wad);       // mkr out, ious in
+    }
 
-  function approve(uint amt) public canExecute {
-    gov.approve(chief, amt);
-    iou.approve(chief, amt);
-  }
+    function free(uint256 wad) public auth {
+        chief.free(wad);       // ious out, mkr in
+        gov.push(cold, wad);   // mkr to cold
+    }
 
-  function lock(uint amt) public canExecute {
-    chief.lock(amt);
-  }
+    function freeAll() public auth {
+        chief.free(chief.deposits(this));            
+        gov.push(cold, gov.balanceOf(this)); 
+    }
 
-  function free(uint amt) public canExecute {
-    chief.free(amt);
-  }
+    function vote(address[] yays) public auth returns (bytes32) {
+        return chief.vote(yays);
+    }
 
-  function withdraw(uint amt) public canExecute {
-    gov.transfer(cold, amt);
-  }
-
-  // actions which can be called from the hot wallet
-  function vote(address[] yays) public canExecute returns (bytes32 slate) {
-    return chief.vote(yays);
-  }
-
-  function vote(bytes32 slate) public canExecute {
-    chief.vote(slate);
-  }
-
-  function etch(address[] yays) public canExecute returns (bytes32 slate) {
-    return chief.etch(yays);
-  }
-
-  // lock proxy cold
-  // free proxy cold
+    function vote(bytes32 slate) public auth {
+        chief.vote(slate);
+    }
 }

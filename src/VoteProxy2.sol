@@ -1,3 +1,4 @@
+// VoteProxy2 - A cold/hot proxy contract and key setup for voting on DSChief
 pragma solidity ^0.4.24;
 
 import 'ds-token/token.sol';
@@ -20,7 +21,8 @@ contract VoteProxy2 {
         IOU.approve(chief, uint256(-1));
     }
 
-    modifier onlyCold() { require(msg.sender == cold); _ }
+    // Hot and Cold addresses end up with same access tier - this is
+    // because `release` pushes to the Cold address, not to the sender
     modifier hotOrCold() { require(msg.sender == cold || msg.sender == hot); _ }
 
     function vote(bytes32 slate)
@@ -39,9 +41,9 @@ contract VoteProxy2 {
         chief.free(wad);
     }
     function release(uint256 wad)
-        onlyCold
+        hotOrCold
     {
-        GOV.transfer(cold, wad);
+        GOV.push(cold, wad);
     }
 }
 

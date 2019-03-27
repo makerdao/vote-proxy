@@ -20,12 +20,8 @@ contract VoteProxy2 {
         IOU.approve(chief, uint256(-1));
     }
 
-    modifier onlyCold() {
-        require(msg.sender == cold);
-    }
-    modifier hotOrCold() {
-        require(msg.sender == cold || msg.sender == hot);
-    }
+    modifier onlyCold() { require(msg.sender == cold); _ }
+    modifier hotOrCold() { require(msg.sender == cold || msg.sender == hot); _ }
 
     function vote(bytes32 slate)
         hotOrCold
@@ -45,7 +41,7 @@ contract VoteProxy2 {
     function release(uint256 wad)
         onlyCold
     {
-        IOU.transfer(msg.sender, wad);
+        GOV.transfer(cold, wad);
     }
 }
 

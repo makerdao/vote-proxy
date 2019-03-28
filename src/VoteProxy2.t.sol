@@ -72,19 +72,39 @@ contract VoteProxyTest is DSTest {
     DSToken iou;
     DSChief chief;
 
+    address[] _slate;
+    bytes32 slate1;
+    bytes32 slate2;
+
     function setUp() public {
         gov = new DSToken("GOV");
         iou = new DSToken("IOU");
+
         chief = new DSChief(gov, iou, 3);
+        _slate = [c1];
+        slate1 = chief.etch(_slate);
+        _slate = [c2];
+        slate2 = chief.etch(_slate);
+        require(slate1 != slate2);
+
         cold = new ProxyUser(chief, gov, iou);
         hot = new ProxyUser(chief, gov, iou);
         evil = new ProxyUser(chief, gov, iou);
+
         proxy = new VoteProxy2(chief, address(cold), address(hot));
         cold.setProxy(proxy);
         hot.setProxy(proxy);
         evil.setProxy(proxy);
+
         gov.mint(address(cold), 100 ether);
         gov.mint(address(hot), 100 ether);
         gov.mint(address(evil), 100 ether);
     }
+
+    function testBasics() public {
+        cold.doTransferGov(address(proxy), 100 ether);
+        require(gov.balanceOf(address(proxy)) == 100 ether);
+    }
 }
+
+

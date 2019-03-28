@@ -4,9 +4,9 @@ import "ds-test/test.sol";
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 
-import "./VoteProxy2.sol";
+import "./VoteProxy2Factory.sol";
 
-contract Voter {
+contract ProxyUser {
     DSChief chief;
     DSToken gov;
     DSToken iou;
@@ -56,5 +56,35 @@ contract Voter {
 
     function doProxyRelease(uint wad) public {
         proxy.release(wad);
+    }
+}
+
+contract VoteProxyTest is DSTest {
+    address constant c1 = address(0x1);
+    address constant c2 = address(0x2);
+
+    VoteProxy2 proxy;
+    ProxyUser cold;
+    ProxyUser hot;
+    ProxyUser evil;
+
+    DSToken gov;
+    DSToken iou;
+    DSChief chief;
+
+    function setUp() public {
+        gov = new DSToken("GOV");
+        iou = new DSToken("IOU");
+        chief = new DSChief(gov, iou, 3);
+        cold = new ProxyUser(chief, gov, iou);
+        hot = new ProxyUser(chief, gov, iou);
+        evil = new ProxyUser(chief, gov, iou);
+        proxy = new VoteProxy2(chief, address(cold), address(hot));
+        cold.setProxy(proxy);
+        hot.setProxy(proxy);
+        evil.setProxy(proxy);
+        gov.mint(address(cold), 100 ether);
+        gov.mint(address(hot), 100 ether);
+        gov.mint(address(evil), 100 ether);
     }
 }

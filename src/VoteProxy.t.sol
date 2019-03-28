@@ -90,7 +90,7 @@ contract VoteProxyTest is DSTest {
         random = new Voter(chief, gov, iou);
         gov.mint(address(cold), 100 ether);
 
-        proxy = new VoteProxy(chief, cold, hot);
+        proxy = new VoteProxy(chief, address(cold), address(hot));
 
         random.setProxy(proxy);
         cold.setProxy(proxy);
@@ -99,34 +99,34 @@ contract VoteProxyTest is DSTest {
 
     // sainity test -> cold can lock and free gov tokens with chief directly
     function test_chief_lock_free() public {
-        cold.approveGov(chief);
-        cold.approveIou(chief);
+        cold.approveGov(address(chief));
+        cold.approveIou(address(chief));
 
         cold.doChiefLock(100 ether);
-        assertEq(gov.balanceOf(cold), 0);
-        assertEq(gov.balanceOf(chief), 100 ether);
+        assertEq(gov.balanceOf(address(cold)), 0);
+        assertEq(gov.balanceOf(address(chief)), 100 ether);
 
         cold.doChiefFree(100 ether);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
     }
 
     function test_cold_lock_free() public {
-        cold.approveGov(proxy);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        cold.approveGov(address(proxy));
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
 
         cold.doProxyLock(100 ether);
-        assertEq(gov.balanceOf(cold), 0 ether);
-        assertEq(gov.balanceOf(chief), 100 ether);
+        assertEq(gov.balanceOf(address(cold)), 0 ether);
+        assertEq(gov.balanceOf(address(chief)), 100 ether);
 
         cold.doProxyFree(100 ether);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
     }
 
     function test_hot_cold_voting() public {
-        cold.approveGov(proxy);
+        cold.approveGov(address(proxy));
         cold.doProxyLock(100 ether);
 
         address[] memory yays = new address[](1);
@@ -143,48 +143,48 @@ contract VoteProxyTest is DSTest {
     }
 
     function test_hot_free() public {
-        cold.approveGov(proxy);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        cold.approveGov(address(proxy));
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
 
         cold.doProxyLock(100 ether);
-        assertEq(gov.balanceOf(cold), 0 ether);
-        assertEq(gov.balanceOf(chief), 100 ether);
+        assertEq(gov.balanceOf(address(cold)), 0 ether);
+        assertEq(gov.balanceOf(address(chief)), 100 ether);
 
         hot.doProxyFree(100 ether);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
     }
 
     function test_lock_free() public {
-        cold.approveGov(proxy);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        cold.approveGov(address(proxy));
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
 
         cold.doProxyLock(100 ether);
-        assertEq(gov.balanceOf(cold), 0 ether);
-        assertEq(gov.balanceOf(chief), 100 ether);
+        assertEq(gov.balanceOf(address(cold)), 0 ether);
+        assertEq(gov.balanceOf(address(chief)), 100 ether);
 
         hot.doProxyFree(100 ether);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
     }
 
     function test_free_all() public {
-        cold.approveGov(proxy);
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        cold.approveGov(address(proxy));
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
 
         cold.doProxyLock(50 ether);
-        cold.doTransfer(proxy, 25 ether);
-        assertEq(gov.balanceOf(cold), 25 ether);
-        assertEq(gov.balanceOf(proxy), 25 ether);
-        assertEq(gov.balanceOf(chief), 50 ether);
+        cold.doTransfer(address(proxy), 25 ether);
+        assertEq(gov.balanceOf(address(cold)), 25 ether);
+        assertEq(gov.balanceOf(address(proxy)), 25 ether);
+        assertEq(gov.balanceOf(address(chief)), 50 ether);
 
         cold.doProxyFreeAll();
-        assertEq(gov.balanceOf(cold), 100 ether);
-        assertEq(gov.balanceOf(proxy), 0 ether);
-        assertEq(gov.balanceOf(chief), 0 ether);
+        assertEq(gov.balanceOf(address(cold)), 100 ether);
+        assertEq(gov.balanceOf(address(proxy)), 0 ether);
+        assertEq(gov.balanceOf(address(chief)), 0 ether);
     }
 
     function testFail_no_proxy_approval() public {
@@ -192,13 +192,13 @@ contract VoteProxyTest is DSTest {
     }
 
     function testFail_random_free() public {
-        cold.approveGov(proxy);
+        cold.approveGov(address(proxy));
         cold.doProxyLock(100 ether);
         random.doProxyFree(100 ether);
     }
 
     function testFail_random_vote() public {
-        cold.approveGov(proxy);
+        cold.approveGov(address(proxy));
         cold.doProxyLock(100 ether);
 
         address[] memory yays = new address[](1);

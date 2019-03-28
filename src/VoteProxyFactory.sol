@@ -1,5 +1,5 @@
 // VoteProxyFactory - create and keep record of proxy identities
-pragma solidity ^0.4.24;
+pragma solidity >=0.4.24;
 
 import "./VoteProxy.sol";
 

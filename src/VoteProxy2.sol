@@ -11,6 +11,8 @@ contract VoteProxy2 {
     DSToken public IOU;
     DSChief chief;
 
+    event Touch();
+
     constructor(DSChief chief_, address cold_, address hot_) {
         chief = chief_;
         cold = cold_;
@@ -23,25 +25,29 @@ contract VoteProxy2 {
 
     // Hot and Cold addresses end up with same access tier - this is
     // because `release` pushes to the Cold address, not to the sender
-    modifier hotOrCold() { require(msg.sender == cold || msg.sender == hot); _ }
+    modifier controlled() {
+        require(msg.sender == cold || msg.sender == hot);
+        Touch();
+        _
+    }
 
     function vote(bytes32 slate)
-        hotOrCold
+        controlled
     {
         chief.vote(slate);
     }
     function lock(uint256 wad)
-        hotOrCold
+        controlled
     {
         chief.lock(wad);
     }
     function free(uint256 wad)
-        hotOrCold
+        controlled
     {
         chief.free(wad);
     }
     function release(uint256 wad)
-        hotOrCold
+        controlled
     {
         GOV.push(cold, wad);
     }

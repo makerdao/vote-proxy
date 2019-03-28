@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.6;
 
 import "ds-test/test.sol";
 import "ds-token/token.sol";
@@ -18,7 +18,7 @@ contract Voter {
         iou = iou_;
     }
 
-    function setProxy(VoteProxy proxy_) public {
+    function setProxy(VoteProxy2 proxy_) public {
         proxy = proxy_;
     }
 
@@ -51,10 +51,10 @@ contract Voter {
     }
 
     function doProxyVote(bytes32 slate) public {
-        proxy.vote(wad);
+        proxy.vote(slate);
     }
 
-    function doProxyRelease(bytes32 slate) public {
+    function doProxyRelease(uint wad) public {
         proxy.release(wad);
     }
 }

@@ -30,15 +30,15 @@ contract ProxyUser {
         chief.free(amt);
     }
 
-    function doTransfer(address guy, uint amt) public {
+    function doTransferGov(address guy, uint amt) public {
         gov.transfer(guy, amt);
     }
 
-    function approveGov(address guy) public {
+    function doApproveGov(address guy) public {
         gov.approve(guy);
     }
 
-    function approveIou(address guy) public {
+    function doApproveIou(address guy) public {
         iou.approve(guy);
     }
 

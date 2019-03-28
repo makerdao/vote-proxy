@@ -104,7 +104,25 @@ contract VoteProxyTest is DSTest {
     function testBasics() public {
         cold.doTransferGov(address(proxy), 100 ether);
         require(gov.balanceOf(address(proxy)) == 100 ether);
+
+        // push gov
+        // lock
+        // vote
+        // lift
+        // free
+        // lift
+        // release
     }
+
+    // testPartialLockScenarios
+
+    // testColdAccess      x4 calls (single test)
+    // testHotAccess       x4 calls (single test)
+    // testFailEvilAccess  x4 tests
+    // testFailLockInsufficientGOV
+    // testFailFreeInsufficientIOU
+    // testFailReleaseInsufficientGOV
+    // testFailNoSuchSlate
 }
 
 

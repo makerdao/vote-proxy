@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >=0.4.24;
 
 import "ds-test/test.sol";
 import "ds-token/token.sol";
@@ -54,7 +54,7 @@ contract Voter {
         proxy.freeAll();
     }
 
-    function doProxyVote(address[] yays) public returns (bytes32 slate) {
+    function doProxyVote(address[] memory yays) public returns (bytes32 slate) {
         return proxy.vote(yays);
     }
 
@@ -65,8 +65,8 @@ contract Voter {
 
 contract VoteProxyTest is DSTest {
     uint256 constant electionSize = 3;
-    address constant c1 = 0x1;
-    address constant c2 = 0x2;
+    address constant c1 = address(0x1);
+    address constant c2 = address(0x2);
     bytes byts;
 
     VoteProxy proxy;
@@ -88,7 +88,7 @@ contract VoteProxyTest is DSTest {
         cold = new Voter(chief, gov, iou);
         hot = new Voter(chief, gov, iou);
         random = new Voter(chief, gov, iou);
-        gov.mint(cold, 100 ether);
+        gov.mint(address(cold), 100 ether);
 
         proxy = new VoteProxy(chief, cold, hot);
 

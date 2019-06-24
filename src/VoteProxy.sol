@@ -1,5 +1,5 @@
 // VoteProxy - vote w/ a hot or cold wallet using a proxy identity
-pragma solidity ^0.4.24;
+pragma solidity >=0.4.24;
 
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
@@ -15,18 +15,18 @@ contract VoteProxy {
         chief = _chief;
         cold = _cold;
         hot = _hot;
-        
+
         gov = chief.GOV();
         iou = chief.IOU();
-        gov.approve(chief, uint256(-1));
-        iou.approve(chief, uint256(-1));
+        gov.approve(address(chief), uint256(-1));
+        iou.approve(address(chief), uint256(-1));
     }
 
     modifier auth() {
         require(msg.sender == hot || msg.sender == cold, "Sender must be a Cold or Hot Wallet");
         _;
     }
-    
+
     function lock(uint256 wad) public auth {
         gov.pull(cold, wad);   // mkr from cold
         chief.lock(wad);       // mkr out, ious in
@@ -38,11 +38,11 @@ contract VoteProxy {
     }
 
     function freeAll() public auth {
-        chief.free(chief.deposits(this));            
-        gov.push(cold, gov.balanceOf(this)); 
+        chief.free(chief.deposits(address(this)));
+        gov.push(cold, gov.balanceOf(address(this)));
     }
 
-    function vote(address[] yays) public auth returns (bytes32) {
+    function vote(address[] memory yays) public auth returns (bytes32) {
         return chief.vote(yays);
     }
 

@@ -1,5 +1,5 @@
 // VoteProxyFactory - create and keep record of proxy identities
-pragma solidity ^0.4.24;
+pragma solidity >=0.4.24;
 
 import "./VoteProxy.sol";
 
@@ -11,11 +11,11 @@ contract VoteProxyFactory {
 
     event LinkRequested(address indexed cold, address indexed hot);
     event LinkConfirmed(address indexed cold, address indexed hot, address indexed voteProxy);
-    
+
     constructor(DSChief chief_) public { chief = chief_; }
 
     function hasProxy(address guy) public view returns (bool) {
-        return (coldMap[guy] != address(0) || hotMap[guy] != address(0));
+        return (address(coldMap[guy]) != address(0x0) || address(hotMap[guy]) != address(0x0));
     }
 
     function initiateLink(address hot) public {
@@ -34,17 +34,17 @@ contract VoteProxyFactory {
         hotMap[msg.sender] = voteProxy;
         coldMap[cold] = voteProxy;
         delete linkRequests[cold];
-        emit LinkConfirmed(cold, msg.sender, voteProxy);
+        emit LinkConfirmed(cold, msg.sender, address(voteProxy));
     }
 
     function breakLink() public {
         require(hasProxy(msg.sender), "No VoteProxy found for this sender");
 
-        VoteProxy voteProxy = coldMap[msg.sender] != address(0)
+        VoteProxy voteProxy = address(coldMap[msg.sender]) != address(0x0)
             ? coldMap[msg.sender] : hotMap[msg.sender];
         address cold = voteProxy.cold();
         address hot = voteProxy.hot();
-        require(chief.deposits(voteProxy) == 0, "VoteProxy still has funds attached to it");
+        require(chief.deposits(address(voteProxy)) == 0, "VoteProxy still has funds attached to it");
 
         delete coldMap[cold];
         delete hotMap[hot];

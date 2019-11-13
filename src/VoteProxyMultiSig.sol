@@ -1,11 +1,10 @@
-// VoteProxy - vote w/ a hot or cold wallet using a proxy identity
 pragma solidity >=0.4.24;
 
 import "ds-token/token.sol";
 import "ds-chief/chief.sol";
 
-contract VoteProxy {
-    address public cold;
+contract VoteProxyMultiSig {
+    address payable public cold;
     mapping(address => uint256) public mgmt;
     mapping(address => uint256) public tech;
 
@@ -15,14 +14,14 @@ contract VoteProxy {
 
     uint256 public live = 0;
 
-    constructor(DSChief _chief, address _cold, address[] _mgmt, address[] _tech) public {
+    constructor(DSChief _chief, address payable _cold, address[] memory _mgmt, address[] memory _tech) public {
         chief = _chief;
         cold = _cold;
 
-        for (i = 0; i < _mgmt.length(); i++) {
+        for (uint i = 0; i < _mgmt.length; i++) {
             mgmt[_mgmt[i]] = 1;
         }
-        for (i = 0; i < _tech.length(); i++) {
+        for (uint i = 0; i < _tech.length; i++) {
             tech[_tech[i]] = 1;
         }
 

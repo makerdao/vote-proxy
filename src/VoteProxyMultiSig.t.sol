@@ -10,7 +10,7 @@ contract Voter {
     DSChief chief;
     DSToken gov;
     DSToken iou;
-    VoteProxy public proxy;
+    VoteProxyMultiSig public proxy;
 
     constructor(DSChief chief_, DSToken gov_, DSToken iou_) public {
         chief = chief_;
@@ -18,7 +18,7 @@ contract Voter {
         iou = iou_;
     }
 
-    function setProxy(VoteProxy proxy_) public {
+    function setProxy(VoteProxyMultiSig proxy_) public {
         proxy = proxy_;
     }
 
@@ -71,13 +71,13 @@ contract Voter {
     }
 }
 
-contract VoteProxyTest is DSTest {
+contract VoteProxyMultiSigTest is DSTest {
     uint256 constant electionSize = 3;
     address constant c1 = address(0x1);
     address constant c2 = address(0x2);
     bytes byts;
 
-    VoteProxy proxy;
+    VoteProxyMultiSig proxy;
     DSToken gov;
     DSToken iou;
     DSChief chief;
@@ -98,13 +98,13 @@ contract VoteProxyTest is DSTest {
 
         cold = new Voter(chief, gov, iou);
         mgmt = new Voter(chief, gov, iou);
-        _mgmt.push(mgmt);
+        _mgmt.push(address(mgmt));
         tech = new Voter(chief, gov, iou);
-        _tech.push(tech);
+        _tech.push(address(tech));
         random = new Voter(chief, gov, iou);
         gov.mint(address(cold), 100 ether);
 
-        proxy = new VoteProxy(chief, address(cold), _mgmt, _tech);
+        proxy = new VoteProxyMultiSig(chief, address(uint160(address(cold))), _mgmt, _tech);
 
         random.setProxy(proxy);
         cold.setProxy(proxy);
@@ -144,14 +144,14 @@ contract VoteProxyTest is DSTest {
         cold.approveGov(address(proxy));
         cold.doProxyLock(100 ether);
 
-        hot.enableProxy();
+        mgmt.enableProxy();
 
         address[] memory yays = new address[](1);
         yays[0] = c1;
         tech.doProxyVote(yays);
         assertEq(chief.approvals(c1), 100 ether);
         assertEq(chief.approvals(c2), 0 ether);
-        assertEq(proxy.live, 0);
+        assertEq(proxy.live(), 0);
     }
 
     function test_mgmt_free() public {

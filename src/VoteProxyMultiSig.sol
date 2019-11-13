@@ -18,10 +18,10 @@ contract VoteProxyMultiSig {
         chief = _chief;
         cold = _cold;
 
-        for (uint i = 0; i < _mgmt.length; i++) {
+        for (uint256 i = 0; i < _mgmt.length; i++) {
             mgmt[_mgmt[i]] = 1;
         }
-        for (uint i = 0; i < _tech.length; i++) {
+        for (uint256 i = 0; i < _tech.length; i++) {
             tech[_tech[i]] = 1;
         }
 

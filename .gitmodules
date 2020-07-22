@@ -3,4 +3,4 @@
 	url = https://github.com/dapphub/ds-test
 [submodule "lib/ds-chief"]
 	path = lib/ds-chief
-	url = https://github.com/dapphub/ds-chief
+	url = https://github.com/makerdao/ds-chief

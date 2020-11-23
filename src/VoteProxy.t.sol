@@ -6,6 +6,10 @@ import "ds-chief/chief.sol";
 
 import "./VoteProxy.sol";
 
+interface Hevm {
+    function roll(uint) external;
+}
+
 contract Voter {
     DSChief chief;
     DSToken gov;
@@ -64,6 +68,8 @@ contract Voter {
 }
 
 contract VoteProxyTest is DSTest {
+    Hevm hevm;
+
     uint256 constant electionSize = 3;
     address constant c1 = address(0x1);
     address constant c2 = address(0x2);
@@ -79,6 +85,8 @@ contract VoteProxyTest is DSTest {
     Voter random;
 
     function setUp() public {
+        hevm = Hevm(address(bytes20(uint160(uint256(keccak256('hevm cheat code'))))));
+
         gov = new DSToken("GOV");
 
         DSChiefFab fab = new DSChiefFab();
@@ -95,6 +103,8 @@ contract VoteProxyTest is DSTest {
         random.setProxy(proxy);
         cold.setProxy(proxy);
         hot.setProxy(proxy);
+
+        hevm.roll(1);
     }
 
     // sainity test -> cold can lock and free gov tokens with chief directly
@@ -105,6 +115,8 @@ contract VoteProxyTest is DSTest {
         cold.doChiefLock(100 ether);
         assertEq(gov.balanceOf(address(cold)), 0);
         assertEq(gov.balanceOf(address(chief)), 100 ether);
+
+        hevm.roll(2);
 
         cold.doChiefFree(100 ether);
         assertEq(gov.balanceOf(address(cold)), 100 ether);
@@ -119,6 +131,8 @@ contract VoteProxyTest is DSTest {
         cold.doProxyLock(100 ether);
         assertEq(gov.balanceOf(address(cold)), 0 ether);
         assertEq(gov.balanceOf(address(chief)), 100 ether);
+
+        hevm.roll(2);
 
         cold.doProxyFree(100 ether);
         assertEq(gov.balanceOf(address(cold)), 100 ether);
@@ -151,6 +165,8 @@ contract VoteProxyTest is DSTest {
         assertEq(gov.balanceOf(address(cold)), 0 ether);
         assertEq(gov.balanceOf(address(chief)), 100 ether);
 
+        hevm.roll(2);
+
         hot.doProxyFree(100 ether);
         assertEq(gov.balanceOf(address(cold)), 100 ether);
         assertEq(gov.balanceOf(address(chief)), 0 ether);
@@ -164,6 +180,8 @@ contract VoteProxyTest is DSTest {
         cold.doProxyLock(100 ether);
         assertEq(gov.balanceOf(address(cold)), 0 ether);
         assertEq(gov.balanceOf(address(chief)), 100 ether);
+
+        hevm.roll(2);
 
         hot.doProxyFree(100 ether);
         assertEq(gov.balanceOf(address(cold)), 100 ether);
@@ -181,6 +199,8 @@ contract VoteProxyTest is DSTest {
         assertEq(gov.balanceOf(address(proxy)), 25 ether);
         assertEq(gov.balanceOf(address(chief)), 50 ether);
 
+        hevm.roll(2);
+
         cold.doProxyFreeAll();
         assertEq(gov.balanceOf(address(cold)), 100 ether);
         assertEq(gov.balanceOf(address(proxy)), 0 ether);
@@ -194,6 +214,7 @@ contract VoteProxyTest is DSTest {
     function testFail_random_free() public {
         cold.approveGov(address(proxy));
         cold.doProxyLock(100 ether);
+        hevm.roll(2);
         random.doProxyFree(100 ether);
     }
 

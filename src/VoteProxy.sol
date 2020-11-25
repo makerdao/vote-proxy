@@ -18,18 +18,32 @@
 // vote w/ a hot or cold wallet using a proxy identity
 pragma solidity >=0.4.24;
 
-import "ds-token/token.sol";
-import "ds-chief/chief.sol";
+interface TokenLike {
+    function balanceOf(address) external view returns (uint256);
+    function approve(address, uint256) external;
+    function pull(address, uint256) external;
+    function push(address, uint256) external;
+}
+
+interface ChiefLike {
+    function GOV() external view returns (TokenLike);
+    function IOU() external view returns (TokenLike);
+    function deposits(address) external view returns (uint256);
+    function lock(uint256) external;
+    function free(uint256) external;
+    function vote(address[] calldata) external returns (bytes32);
+    function vote(bytes32) external;
+}
 
 contract VoteProxy {
-    address public cold;
-    address public hot;
-    DSToken public gov;
-    DSToken public iou;
-    DSChief public chief;
+    address   public cold;
+    address   public hot;
+    TokenLike public gov;
+    TokenLike public iou;
+    ChiefLike public chief;
 
-    constructor(DSChief _chief, address _cold, address _hot) public {
-        chief = _chief;
+    constructor(address _chief, address _cold, address _hot) public {
+        chief = ChiefLike(_chief);
         cold = _cold;
         hot = _hot;
 

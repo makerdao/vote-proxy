@@ -98,7 +98,7 @@ contract VoteProxyTest is DSTest {
         random = new Voter(chief, gov, iou);
         gov.mint(address(cold), 100 ether);
 
-        proxy = new VoteProxy(chief, address(cold), address(hot));
+        proxy = new VoteProxy(address(chief), address(cold), address(hot));
 
         random.setProxy(proxy);
         cold.setProxy(proxy);

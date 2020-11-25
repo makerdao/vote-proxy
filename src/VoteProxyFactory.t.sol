@@ -1,6 +1,7 @@
 pragma solidity >=0.4.24;
 
 import "ds-test/test.sol";
+import "ds-chief/chief.sol";
 import "./VoteProxyFactory.sol";
 
 interface Hevm {
@@ -70,8 +71,8 @@ contract VoteProxyFactoryTest is DSTest {
         gov = new DSToken("GOV");
 
         DSChiefFab fab = new DSChiefFab();
-        chief = fab.newChief(gov, electionSize);
-        voteProxyFactory = new VoteProxyFactory(chief);
+        chief = DSChief(address(fab.newChief(gov, electionSize)));
+        voteProxyFactory = new VoteProxyFactory(address(chief));
         cold = new VoteUser(voteProxyFactory);
         hot  = new VoteUser(voteProxyFactory);
 
